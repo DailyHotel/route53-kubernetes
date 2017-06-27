@@ -5,9 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
-	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/golang/glog"
+	"golang.org/x/net/publicsuffix"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/transport"
@@ -26,6 +27,7 @@ import (
 
 // Don't actually commit the changes to route53 records, just print out what we would have done.
 var dryRun bool
+
 // Sleep time in secs before checking
 var sleepTime time.Duration
 
@@ -36,9 +38,9 @@ func init() {
 	}
 
 	sleepTimeString := os.Getenv("SLEEP_TIME")
-	if (sleepTimeString != "") {
+	if sleepTimeString != "" {
 		i64, err := strconv.ParseInt(sleepTimeString, 10, 32)
-		if (err != nil) {
+		if err != nil {
 			fmt.Println("Error while trying to parse SLEEP_TIME env var")
 			os.Exit(1)
 		}
@@ -222,7 +224,7 @@ func findMostSpecificZoneForDomain(domain string, zones []*route53.HostedZone) (
 		zone := zones[i]
 		zoneName := *zone.Name
 
-		if (domain == zoneName || strings.HasSuffix(domain, "." + zoneName)) && curLen < len(zoneName) {
+		if (domain == zoneName || strings.HasSuffix(domain, "."+zoneName)) && curLen < len(zoneName) {
 			curLen = len(zoneName)
 			mostSpecific = zone
 		}
@@ -236,12 +238,11 @@ func findMostSpecificZoneForDomain(domain string, zones []*route53.HostedZone) (
 }
 
 func getTLD(domain string) (string, error) {
-	domainParts := strings.Split(domain, ".")
-	segments := len(domainParts)
-	if segments < 3 {
+	tld, err := publicsuffix.EffectiveTLDPlusOne(domain)
+	if err != nil {
 		return "", fmt.Errorf("Domain %s is invalid - it should be a fully qualified domain name and subdomain (i.e. test.example.com)", domain)
 	}
-	return strings.Join(domainParts[segments-2:], "."), nil
+	return tld, nil
 }
 
 func domainWithTrailingDot(withoutDot string) string {
