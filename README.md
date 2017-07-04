@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/DailyHotel/route53-kubernetes)](https://goreportcard.com/report/github.com/DailyHotel/route53-kubernetes)
+
 # DEPRECATED
 
 This repo has been officially deprecated in favor of the https://github.com/kubernetes-incubator/external-dns addon. That addon offers a lot more features, better performance, and a compatibility mode for current users of route53-kubernetes. See compatibility mode docs [here](https://github.com/kubernetes-incubator/external-dns/blob/55d709c38ce87ec05d8ab6cd568ca65bc7557fcf/docs/faq.md#how-do-i-specify-dns-name-for-my-kubernetes-objects).
